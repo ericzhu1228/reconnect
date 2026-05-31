@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>RECONNECT PROTOCOL</title>
+
+<style>
+body {
+    margin: 0;
+    background: black;
+    color: #00ff9d;
+    font-family: monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.container {
+    text-align: center;
+    width: 80%;
+}
+
+input {
+    background: black;
+    border: 1px solid #00ff9d;
+    color: #00ff9d;
+    padding: 10px;
+    margin: 5px;
+    font-family: monospace;
+}
+
+button {
+    background: black;
+    border: 1px solid #00ff9d;
+    color: #00ff9d;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+#main {
+    display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container" id="login">
+    <h2>RECONNECT PROTOCOL</h2>
+    <p>输入双重验证密钥</p>
+
+    <input id="a" placeholder="你的生日 YYYYMMDD"><br>
+    <input id="b" placeholder="我的生日 YYYYMMDD"><br>
+
+    <button onclick="login()">验证</button>
+
+    <p id="msg"></p>
+</div>
+
+<div class="container" id="main">
+    <h2>连接中...</h2>
+    <p id="loading"></p>
+
+    <div id="content" style="display:none;">
+        <h3>连接状态：部分恢复</h3>
+
+        <p>我们已经很久没有更新彼此的数据。</p>
+        <p>系统不会假设你现在的样子。</p>
+        <p>但连接仍然存在。</p>
+
+        <hr>
+
+        <h3>告诉我现在的你</h3>
+        <textarea rows="4" cols="40"></textarea>
+
+        <h3>我应该补上的部分</h3>
+        <textarea rows="4" cols="40"></textarea>
+
+        <br><br>
+        <button onclick="end()">发送</button>
+
+        <p id="final"></p>
+    </div>
+</div>
+
+<script>
+function login() {
+    let a = document.getElementById("a").value;
+    let b = document.getElementById("b").value;
+
+    if(a.length === 8 && b.length === 8) {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("main").style.display = "block";
+
+        let text = "正在加载记忆模块...";
+        let i = 0;
+
+        let interval = setInterval(() => {
+            document.getElementById("loading").innerText = text.slice(0, i);
+            i++;
+            if(i > text.length) {
+                clearInterval(interval);
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("content").style.display = "block";
+            }
+        }, 80);
+    } else {
+        document.getElementById("msg").innerText = "验证失败：时间格式不匹配";
+    }
+}
+
+function end() {
+    document.getElementById("final").innerText =
+        "连接不会因为时间断开而失效，只是需要重新校准。";
+}
+</script>
+
+</body>
+</html>
