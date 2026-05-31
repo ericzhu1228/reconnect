@@ -8,16 +8,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400&family=ZCOOL+XiaoWei&display=swap');
 
 :root {
-  --bg:       #0d0a14;
-  --surface:  rgba(255,255,255,0.04);
-  --border:   rgba(255,255,255,0.12);
-  --pink:     #f4a8c0;
-  --peach:    #f7c59f;
-  --lavender: #c4aff0;
-  --sky:      #a8d8f0;
-  --gold:     #f5d76e;
-  --text:     rgba(255,240,250,0.88);
-  --dim:      rgba(255,240,250,0.42);
+  --bg:       #0d0b15;
+  --surface:  rgba(155,130,200,0.07);
+  --border:   rgba(155,130,200,0.2);
+  --pink:     #d4a8e8;
+  --peach:    #e8c8f5;
+  --lavender: #a888d0;
+  --sky:      #c0aee8;
+  --gold:     #e8d0f8;
+  --text:     rgba(238,228,252,0.88);
+  --dim:      rgba(185,165,215,0.50);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -51,9 +51,9 @@ body {
   opacity: 0.22;
   animation: orb-drift ease-in-out infinite alternate;
 }
-.orb1 { width: 400px; height: 400px; background: var(--lavender); top: -100px; left: -80px; animation-duration: 14s; }
-.orb2 { width: 350px; height: 350px; background: var(--pink); bottom: -80px; right: -60px; animation-duration: 11s; }
-.orb3 { width: 280px; height: 280px; background: var(--sky); top: 40%; left: 40%; animation-duration: 17s; }
+.orb1 { width: 420px; height: 420px; background: #4a3068; top: -120px; left: -100px; animation-duration: 14s; }
+.orb2 { width: 360px; height: 360px; background: #7a50b0; bottom: -100px; right: -80px; animation-duration: 11s; }
+.orb3 { width: 300px; height: 300px; background: #3a2858; top: 40%; left: 35%; animation-duration: 17s; }
 
 @keyframes orb-drift {
   from { transform: translate(0,0) scale(1); }
@@ -148,7 +148,7 @@ body {
   font-family: 'Ma Shan Zheng', cursive;
   font-size: clamp(42px, 11vw, 72px);
   line-height: 1.15;
-  background: linear-gradient(135deg, var(--pink) 0%, var(--lavender) 50%, var(--sky) 100%);
+  background: linear-gradient(135deg, #e8c0ff 0%, #b090d8 50%, #d0b8f0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -185,7 +185,7 @@ body {
 .btn-primary {
   display: inline-block;
   background: transparent;
-  border: 1px solid rgba(244,168,192,0.5);
+  border: 1px solid rgba(180,140,240,0.5);
   color: var(--pink);
   font-family: 'ZCOOL XiaoWei', serif;
   font-size: 14px;
@@ -202,11 +202,11 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(244,168,192,0.1), rgba(196,175,240,0.1));
+  background: linear-gradient(135deg, rgba(180,140,240,0.12), rgba(140,100,220,0.12));
   opacity: 0;
   transition: opacity 0.3s;
 }
-.btn-primary:hover { border-color: var(--pink); box-shadow: 0 0 30px rgba(244,168,192,0.2); }
+.btn-primary:hover { border-color: var(--pink); box-shadow: 0 0 30px rgba(180,140,240,0.25); }
 .btn-primary:hover::before { opacity: 1; }
 .btn-primary:active { transform: scale(0.98); }
 
@@ -272,8 +272,8 @@ body {
 }
 .field-input::placeholder { color: rgba(255,255,255,0.1); font-size: 14px; letter-spacing: 3px; }
 .field-input:focus {
-  border-color: rgba(244,168,192,0.5);
-  box-shadow: 0 0 20px rgba(244,168,192,0.08);
+  border-color: rgba(180,140,240,0.6);
+  box-shadow: 0 0 20px rgba(160,120,230,0.1);
 }
 
 .error-line {
@@ -451,8 +451,8 @@ body {
 }
 .ask-textarea::placeholder { color: rgba(255,255,255,0.15); font-size: 13px; }
 .ask-textarea:focus {
-  border-color: rgba(244,168,192,0.4);
-  box-shadow: 0 0 16px rgba(244,168,192,0.06);
+  border-color: rgba(180,140,240,0.45);
+  box-shadow: 0 0 16px rgba(160,120,230,0.08);
 }
 
 .save-note {
@@ -479,7 +479,7 @@ body {
   opacity: 0;
   animation: fadeUp 0.5s 1.4s ease both;
 }
-.btn-send:hover { border-color: var(--pink); box-shadow: 0 0 24px rgba(244,168,192,0.15); }
+.btn-send:hover { border-color: var(--pink); box-shadow: 0 0 24px rgba(180,140,240,0.2); }
 .btn-send:active { transform: scale(0.99); }
 
 /* ══════════════════════════════
@@ -509,7 +509,7 @@ body {
   font-family: 'Ma Shan Zheng', cursive;
   font-size: clamp(28px, 7vw, 38px);
   letter-spacing: 5px;
-  background: linear-gradient(135deg, var(--pink), var(--lavender));
+  background: linear-gradient(135deg, #e8c0ff, #b090d8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -574,7 +574,7 @@ body {
 .debug-overlay.open { display: flex; animation: fadeIn 0.3s ease; }
 .debug-modal {
   width: min(340px, 88vw);
-  border: 1px solid rgba(244,168,192,0.2);
+  border: 1px solid rgba(180,140,240,0.2);
   background: rgba(13,10,20,0.98);
   padding: 40px 28px;
   text-align: center;
@@ -733,11 +733,11 @@ body {
       谢谢你打开了这里。<br>
       谢谢你认真回答了那些问题。<br><br>
       你的节日，<em>你值得被好好对待</em>。<br>
-      我会一直记得今天是六一，<br>
-      是你的节日。
+      至少今天，<br>
+      有人认真地想了你一下。
     </p>
     <div class="end-hr"></div>
-    <div class="end-sign">写给你的人 🌙</div>
+    <div class="end-sign">彩蛋找找看 ✨</div>
   </div>
 </div>
 
@@ -745,13 +745,12 @@ body {
 <button id="debug-btn" onclick="openDebug()">// debug</button>
 <div class="debug-overlay" id="debug-overlay" onclick="closeDebugOverlay(event)">
   <div class="debug-modal">
-    <div class="debug-hint">// 写给你的彩蛋</div>
+    <div class="debug-hint">🎉 彩蛋 · 恭喜找到</div>
     <div class="debug-text">
-      这个网站只是一个借口。<br><br>
-      我只是想<br>
-      在六一这天<br>
-      认真地跟你说声<br>
-      <span style="color:var(--pink)">节日快乐。</span>
+      恭喜找到彩蛋啦！<br><br>
+      <span style="color:var(--pink)">六一快乐！</span><br><br>
+      把截图发给我吧<br>
+      还有礼物哦 🎁
     </div>
     <button class="debug-close" onclick="document.getElementById('debug-overlay').classList.remove('open')">[ 关闭 ]</button>
   </div>
@@ -786,7 +785,7 @@ body {
       const alpha = (Math.sin(s.a)+1)/2 * 0.7 + 0.1;
       ctx.beginPath();
       ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-      ctx.fillStyle = `rgba(255,240,255,${alpha})`;
+      ctx.fillStyle = `rgba(210,195,240,${alpha})`;
       ctx.fill();
     });
     requestAnimationFrame(draw);
@@ -801,7 +800,7 @@ body {
 function launchConfetti(){
   const wrap = document.getElementById('confetti-wrap');
   wrap.innerHTML = '';
-  const colors = ['#f4a8c0','#c4aff0','#a8d8f0','#f5d76e','#f7c59f','#a8f0d0'];
+  const colors = ['#d4a8e8','#b090d8','#e8c8f5','#c0b0e8','#e0d0f8','#f5e0ff'];
   for(let i=0;i<80;i++){
     const el = document.createElement('div');
     el.className = 'conf';
