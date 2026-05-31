@@ -2,120 +2,775 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RECONNECT PROTOCOL</title>
-
 <style>
-body {
-    margin: 0;
-    background: black;
-    color: #00ff9d;
-    font-family: monospace;
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
+
+  :root {
+    --green: #00ff9d;
+    --green-dim: #00c97a;
+    --green-glow: rgba(0, 255, 157, 0.15);
+    --green-faint: rgba(0, 255, 157, 0.05);
+    --red: #ff4466;
+    --amber: #ffcc00;
+    --bg: #000;
+    --border: 1px solid rgba(0, 255, 157, 0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
     overflow: hidden;
-}
+    position: relative;
+  }
 
-.container {
-    text-align: center;
-    width: 80%;
-}
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
 
-input {
-    background: black;
-    border: 1px solid #00ff9d;
-    color: #00ff9d;
-    padding: 10px;
-    margin: 5px;
-    font-family: monospace;
-}
+  /* Noise texture */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
 
-button {
-    background: black;
-    border: 1px solid #00ff9d;
-    color: #00ff9d;
-    padding: 10px 20px;
-    cursor: pointer;
-}
+  /* Grid background */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,157,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,157,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
 
-#main {
+  /* Corner decorations */
+  .corner {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    opacity: 0.4;
+  }
+  .corner.tl { top: 20px; left: 20px; border-top: 1px solid var(--green); border-left: 1px solid var(--green); }
+  .corner.tr { top: 20px; right: 20px; border-top: 1px solid var(--green); border-right: 1px solid var(--green); }
+  .corner.bl { bottom: 20px; left: 20px; border-bottom: 1px solid var(--green); border-left: 1px solid var(--green); }
+  .corner.br { bottom: 20px; right: 20px; border-bottom: 1px solid var(--green); border-right: 1px solid var(--green); }
+
+  /* Status bar */
+  .status-bar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    opacity: 0.4;
+    letter-spacing: 2px;
+  }
+
+  .blink { animation: blink 1.2s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ============ SCREEN SYSTEM ============ */
+  .screen {
     display: none;
-}
+    width: 100%;
+    max-width: 560px;
+    padding: 20px;
+    position: relative;
+    z-index: 10;
+    animation: fadeIn 0.4s ease;
+  }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ============ SHARED COMPONENTS ============ */
+  .panel {
+    border: var(--border);
+    background: var(--green-faint);
+    padding: 32px 36px;
+    position: relative;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top left, rgba(0,255,157,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .panel-label {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 8px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--green-dim);
+  }
+
+  h1, h2 {
+    font-family: 'VT323', monospace;
+    letter-spacing: 4px;
+    margin-bottom: 6px;
+  }
+
+  h1 { font-size: 32px; }
+  h2 { font-size: 26px; }
+
+  .subtitle {
+    font-size: 11px;
+    opacity: 0.5;
+    letter-spacing: 2px;
+    margin-bottom: 28px;
+  }
+
+  .divider {
+    border: none;
+    border-top: var(--border);
+    margin: 24px 0;
+    opacity: 0.5;
+  }
+
+  /* ============ LOGIN SCREEN ============ */
+  .field-group { margin-bottom: 16px; }
+
+  .field-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    opacity: 0.6;
+    margin-bottom: 6px;
+  }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .field-prefix {
+    font-size: 12px;
+    opacity: 0.5;
+    white-space: nowrap;
+  }
+
+  input[type="text"], input[type="password"], textarea {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(0,255,157,0.5);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px;
+    padding: 6px 4px;
+    outline: none;
+    width: 100%;
+    letter-spacing: 3px;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus,
+  input[type="password"]:focus,
+  textarea:focus {
+    border-bottom-color: var(--green);
+    box-shadow: 0 2px 0 rgba(0,255,157,0.1);
+  }
+
+  textarea {
+    resize: none;
+    width: 100%;
+    border: var(--border);
+    padding: 12px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    line-height: 1.6;
+    background: var(--green-faint);
+    margin-top: 8px;
+  }
+
+  .btn {
+    display: inline-block;
+    background: transparent;
+    border: var(--border);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    padding: 10px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--green-glow);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn:hover::before { opacity: 1; }
+  .btn:hover { box-shadow: 0 0 16px rgba(0,255,157,0.2); }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-full { width: 100%; text-align: center; margin-top: 8px; }
+
+  .error-msg {
+    font-size: 11px;
+    color: var(--red);
+    letter-spacing: 2px;
+    margin-top: 12px;
+    min-height: 18px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .error-msg.show { opacity: 1; }
+
+  /* ============ LOADING SCREEN ============ */
+  .loading-line {
+    font-size: 13px;
+    opacity: 0;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+    transition: opacity 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .loading-line.done { opacity: 1; }
+
+  .loading-line::before {
+    content: '▸';
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  .progress-bar-wrap {
+    margin-top: 24px;
+    border: var(--border);
+    height: 4px;
+    background: var(--green-faint);
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--green);
+    width: 0%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 12px var(--green);
+  }
+
+  .loading-status {
+    margin-top: 12px;
+    font-size: 11px;
+    opacity: 0.5;
+    letter-spacing: 2px;
+  }
+
+  /* ============ MAIN SCREEN ============ */
+  .tag {
+    display: inline-block;
+    border: 1px solid rgba(0,255,157,0.3);
+    font-size: 10px;
+    padding: 2px 8px;
+    letter-spacing: 2px;
+    margin-right: 6px;
+    margin-bottom: 20px;
+    opacity: 0.7;
+  }
+
+  .tag.online { color: var(--green); border-color: var(--green); }
+  .tag.partial { color: var(--amber); border-color: var(--amber); }
+
+  .section {
+    margin-bottom: 28px;
+  }
+
+  .section-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+    opacity: 0.5;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(0,255,157,0.2);
+  }
+
+  .intro-text {
+    font-size: 13px;
+    line-height: 1.8;
+    opacity: 0.8;
+    letter-spacing: 0.5px;
+  }
+
+  /* Memory check items */
+  .memory-item {
+    border: var(--border);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    background: var(--green-faint);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .memory-text {
+    font-size: 12px;
+    flex: 1;
+    opacity: 0.8;
+    line-height: 1.5;
+    min-width: 140px;
+  }
+
+  .memory-options {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .mem-btn {
+    background: transparent;
+    border: 1px solid rgba(0,255,157,0.3);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    opacity: 0.7;
+  }
+
+  .mem-btn:hover, .mem-btn.selected {
+    background: var(--green-glow);
+    border-color: var(--green);
+    opacity: 1;
+  }
+
+  .mem-btn.selected { box-shadow: 0 0 8px rgba(0,255,157,0.2); }
+
+  /* ============ FINAL SCREEN ============ */
+  .final-status {
+    font-family: 'VT323', monospace;
+    font-size: 48px;
+    letter-spacing: 6px;
+    text-align: center;
+    margin-bottom: 4px;
+    text-shadow: 0 0 30px rgba(0,255,157,0.4);
+  }
+
+  .final-subtitle {
+    text-align: center;
+    font-size: 11px;
+    opacity: 0.4;
+    letter-spacing: 4px;
+    margin-bottom: 28px;
+  }
+
+  .final-message {
+    font-size: 13px;
+    line-height: 2;
+    opacity: 0.75;
+    text-align: left;
+    margin-bottom: 20px;
+  }
+
+  .closing-line {
+    text-align: center;
+    font-size: 12px;
+    opacity: 0.5;
+    letter-spacing: 2px;
+    margin-top: 24px;
+    line-height: 1.8;
+  }
+
+  /* ============ DEBUG BUTTON ============ */
+  #debug-trigger {
+    position: fixed;
+    bottom: 24px;
+    right: 28px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: rgba(0,255,157,0.12);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 2px;
+    z-index: 100;
+    transition: color 0.3s;
+  }
+  #debug-trigger:hover { color: rgba(0,255,157,0.35); }
+
+  /* Debug modal */
+  .debug-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 500;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+  }
+  .debug-overlay.open { display: flex; }
+
+  .debug-box {
+    border: 1px solid rgba(0,255,157,0.3);
+    background: #000;
+    padding: 40px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+  }
+
+  .debug-label {
+    font-size: 9px;
+    letter-spacing: 4px;
+    opacity: 0.3;
+    margin-bottom: 20px;
+  }
+
+  .debug-text {
+    font-size: 16px;
+    line-height: 1.9;
+    opacity: 0.9;
+  }
+
+  .debug-close {
+    margin-top: 28px;
+    font-size: 10px;
+    opacity: 0.3;
+    cursor: pointer;
+    letter-spacing: 3px;
+    background: transparent;
+    border: none;
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    transition: opacity 0.2s;
+  }
+  .debug-close:hover { opacity: 0.7; }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .panel { padding: 24px 20px; }
+    .memory-item { flex-direction: column; }
+  }
 </style>
 </head>
-
 <body>
 
-<div class="container" id="login">
-    <h2>RECONNECT PROTOCOL</h2>
-    <p>输入双重验证密钥</p>
+<div class="grid-bg"></div>
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+<div class="status-bar">SYS<span class="blink">_</span>ONLINE &nbsp;|&nbsp; PROTOCOL v2.0</div>
 
-    <input id="a" placeholder="你的生日 YYYYMMDD"><br>
-    <input id="b" placeholder="我的生日 YYYYMMDD"><br>
+<!-- ===== SCREEN 1: LOGIN ===== -->
+<div class="screen active" id="screen-login">
+  <div class="panel">
+    <div class="panel-label">AUTHENTICATION REQUIRED</div>
+    <h1>RECONNECT</h1>
+    <p class="subtitle">PROTOCOL v2.0 &nbsp;·&nbsp; DUAL KEY SYSTEM</p>
 
-    <button onclick="login()">验证</button>
+    <div class="field-group">
+      <div class="field-label">KEY A &nbsp;·&nbsp; USER_ID_BIRTH</div>
+      <div class="field-row">
+        <span class="field-prefix">▸</span>
+        <input type="password" id="key-a" placeholder="YYYYMMDD" maxlength="8" autocomplete="off">
+      </div>
+    </div>
 
-    <p id="msg"></p>
+    <div class="field-group">
+      <div class="field-label">KEY B &nbsp;·&nbsp; ROOT_LINK_BIRTH</div>
+      <div class="field-row">
+        <span class="field-prefix">▸</span>
+        <input type="password" id="key-b" placeholder="YYYYMMDD" maxlength="8" autocomplete="off">
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <button class="btn btn-full" onclick="attemptLogin()">VERIFY &nbsp;→</button>
+    <p class="error-msg" id="login-error"></p>
+  </div>
 </div>
 
-<div class="container" id="main">
-    <h2>连接中...</h2>
-    <p id="loading"></p>
+<!-- ===== SCREEN 2: LOADING ===== -->
+<div class="screen" id="screen-loading">
+  <div class="panel">
+    <div class="panel-label">SYSTEM BOOT</div>
+    <h2>初始化中</h2>
+    <p class="subtitle">LOADING MEMORY MODULES</p>
 
-    <div id="content" style="display:none;">
-        <h3>连接状态：部分恢复</h3>
+    <div id="loading-lines" style="margin: 20px 0;"></div>
 
-        <p>我们已经很久没有更新彼此的数据。</p>
-        <p>系统不会假设你现在的样子。</p>
-        <p>但连接仍然存在。</p>
-
-        <hr>
-
-        <h3>告诉我现在的你</h3>
-        <textarea rows="4" cols="40"></textarea>
-
-        <h3>我应该补上的部分</h3>
-        <textarea rows="4" cols="40"></textarea>
-
-        <br><br>
-        <button onclick="end()">发送</button>
-
-        <p id="final"></p>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill"></div>
     </div>
+    <p class="loading-status" id="loading-status">▸ 请稍候...</p>
+  </div>
+</div>
+
+<!-- ===== SCREEN 3: MAIN ===== -->
+<div class="screen" id="screen-main">
+  <div class="panel">
+    <div class="panel-label">RECONNECT PROTOCOL</div>
+
+    <span class="tag partial">连接状态：部分恢复</span>
+    <span class="tag online">信任通道：已开启</span>
+
+    <div class="section">
+      <div class="intro-text">
+        我们已经很久没有更新彼此的数据了。<br>
+        这个系统不会假设你现在的样子，<br>
+        但它知道——连接从未真正断开过。
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- A: 现状更新 -->
+    <div class="section">
+      <div class="section-title">A · 现状更新</div>
+      <p style="font-size:12px; opacity:0.6; margin-bottom:10px;">告诉我，现在的你：</p>
+      <textarea id="current-you" rows="4" placeholder="最近在做什么、喜欢什么、状态怎么样..."></textarea>
+    </div>
+
+    <!-- B: 记忆对照 -->
+    <div class="section">
+      <div class="section-title">B · 记忆校验</div>
+      <p style="font-size:12px; opacity:0.6; margin-bottom:12px;">以下记录是否仍然成立？</p>
+
+      <div class="memory-item">
+        <div class="memory-text">你以前总是很认真地对待在乎的人</div>
+        <div class="memory-options">
+          <button class="mem-btn" onclick="selectMem(this, 0)">仍然</button>
+          <button class="mem-btn" onclick="selectMem(this, 0)">不是</button>
+          <button class="mem-btn" onclick="selectMem(this, 0)">变了</button>
+        </div>
+      </div>
+
+      <div class="memory-item">
+        <div class="memory-text">你有一种很难表达、但能感受到的温柔</div>
+        <div class="memory-options">
+          <button class="mem-btn" onclick="selectMem(this, 1)">仍然</button>
+          <button class="mem-btn" onclick="selectMem(this, 1)">不是</button>
+          <button class="mem-btn" onclick="selectMem(this, 1)">变了</button>
+        </div>
+      </div>
+
+      <div class="memory-item">
+        <div class="memory-text">沉默对你来说有时比语言更诚实</div>
+        <div class="memory-options">
+          <button class="mem-btn" onclick="selectMem(this, 2)">仍然</button>
+          <button class="mem-btn" onclick="selectMem(this, 2)">不是</button>
+          <button class="mem-btn" onclick="selectMem(this, 2)">变了</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- C: 补上的部分 -->
+    <div class="section">
+      <div class="section-title">C · 数据补全</div>
+      <p style="font-size:12px; opacity:0.6; margin-bottom:4px;">如果可以更新这段关系的数据库，</p>
+      <p style="font-size:12px; opacity:0.6; margin-bottom:10px;">你想让我知道什么？</p>
+      <textarea id="missing-data" rows="4" placeholder="我错过的你..."></textarea>
+    </div>
+
+    <button class="btn btn-full" onclick="goToFinal()">提交 &nbsp;→</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 4: FINAL ===== -->
+<div class="screen" id="screen-final">
+  <div class="panel">
+    <div class="final-status">CONNECTED</div>
+    <p class="final-subtitle">重新校准完成</p>
+
+    <hr class="divider">
+
+    <p class="final-message">
+      很久没联系的这段时间，<br>
+      我们都变了很多。<br><br>
+      这个系统并不试图完全理解你现在的样子。<br>
+      只是想重新建立一个——<br>
+      可以对话的连接。
+    </p>
+
+    <hr class="divider">
+
+    <div class="section">
+      <div class="section-title">如果你愿意</div>
+      <p style="font-size:12px; opacity:0.6; margin-bottom:10px;">可以告诉我一些，我错过的你。</p>
+      <textarea id="final-msg" rows="4" placeholder="你想对我说的话..."></textarea>
+    </div>
+
+    <button class="btn btn-full" onclick="finalize()">发送</button>
+
+    <p class="closing-line" id="closing-line" style="display:none;">
+      连接不会因为时间断开而失效<br>
+      只是需要重新校准
+    </p>
+  </div>
+</div>
+
+<!-- DEBUG BUTTON -->
+<button id="debug-trigger" onclick="openDebug()">// DEBUG MODE</button>
+
+<!-- DEBUG MODAL -->
+<div class="debug-overlay" id="debug-overlay" onclick="closeDebug(event)">
+  <div class="debug-box">
+    <p class="debug-label">// SYSTEM LOG · INTERNAL ONLY</p>
+    <p class="debug-text">
+      其实这个系统<br>
+      只是一个借口。<br><br>
+      我只是想重新<br>
+      和你说话。
+    </p>
+    <button class="debug-close" onclick="document.getElementById('debug-overlay').classList.remove('open')">[ 关闭 ]</button>
+  </div>
 </div>
 
 <script>
-function login() {
-    let a = document.getElementById("a").value;
-    let b = document.getElementById("b").value;
+  // ---- LOGIN ----
+  function attemptLogin() {
+    const a = document.getElementById('key-a').value.trim();
+    const b = document.getElementById('key-b').value.trim();
+    const errEl = document.getElementById('login-error');
 
-    if(a.length === 8 && b.length === 8) {
-        document.getElementById("login").style.display = "none";
-        document.getElementById("main").style.display = "block";
-
-        let text = "正在加载记忆模块...";
-        let i = 0;
-
-        let interval = setInterval(() => {
-            document.getElementById("loading").innerText = text.slice(0, i);
-            i++;
-            if(i > text.length) {
-                clearInterval(interval);
-                document.getElementById("loading").style.display = "none";
-                document.getElementById("content").style.display = "block";
-            }
-        }, 80);
+    if (a.length === 8 && b.length === 8 && /^\d+$/.test(a) && /^\d+$/.test(b)) {
+      errEl.classList.remove('show');
+      showLoading();
     } else {
-        document.getElementById("msg").innerText = "验证失败：时间格式不匹配";
+      errEl.textContent = '▸ 验证失败：记忆匹配度不足';
+      errEl.classList.add('show');
+      setTimeout(() => errEl.classList.remove('show'), 3000);
     }
-}
+  }
 
-function end() {
-    document.getElementById("final").innerText =
-        "连接不会因为时间断开而失效，只是需要重新校准。";
-}
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && document.getElementById('screen-login').classList.contains('active')) {
+      attemptLogin();
+    }
+  });
+
+  // ---- LOADING ----
+  const loadingSteps = [
+    '正在加载记忆模块...',
+    '正在扫描历史连接...',
+    '正在修复时间断层...',
+    '正在重建用户关系模型...',
+    '正在校准信任通道...',
+  ];
+
+  function showLoading() {
+    switchScreen('screen-loading');
+    const container = document.getElementById('loading-lines');
+    container.innerHTML = '';
+    const fill = document.getElementById('progress-fill');
+    const statusEl = document.getElementById('loading-status');
+
+    let i = 0;
+
+    // Create all lines invisible
+    loadingSteps.forEach(step => {
+      const div = document.createElement('div');
+      div.className = 'loading-line';
+      div.textContent = step;
+      container.appendChild(div);
+    });
+
+    const lines = container.querySelectorAll('.loading-line');
+
+    const interval = setInterval(() => {
+      if (i < lines.length) {
+        lines[i].classList.add('done');
+        fill.style.width = ((i + 1) / lines.length * 85) + '%';
+        i++;
+      } else {
+        clearInterval(interval);
+        fill.style.width = '100%';
+        statusEl.textContent = '▸ 连接成功 · 正在进入...';
+        setTimeout(() => switchScreen('screen-main'), 900);
+      }
+    }, 480);
+  }
+
+  // ---- MEMORY BUTTONS ----
+  function selectMem(btn, group) {
+    const siblings = btn.closest('.memory-options').querySelectorAll('.mem-btn');
+    siblings.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  // ---- NAVIGATION ----
+  function goToFinal() {
+    switchScreen('screen-final');
+  }
+
+  function finalize() {
+    const closing = document.getElementById('closing-line');
+    closing.style.display = 'block';
+    closing.style.animation = 'fadeIn 0.8s ease';
+    document.querySelector('#screen-final .btn').textContent = '已送达 ✓';
+    document.querySelector('#screen-final .btn').style.opacity = '0.4';
+    document.querySelector('#screen-final .btn').disabled = true;
+  }
+
+  function switchScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // ---- DEBUG ----
+  function openDebug() {
+    document.getElementById('debug-overlay').classList.add('open');
+  }
+
+  function closeDebug(e) {
+    if (e.target === document.getElementById('debug-overlay')) {
+      document.getElementById('debug-overlay').classList.remove('open');
+    }
+  }
 </script>
-
 </body>
 </html>
