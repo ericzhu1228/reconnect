@@ -697,9 +697,9 @@ body {
     <div class="ask-block" id="ask1">
       <div class="ask-q">
         <span class="ask-q-num">Q1</span>
-        <span>最近过得怎么样？有什么开心的或者烦的事吗？</span>
+        <span>有什么想让我了解关于你的？也可以说说，你想多了解我哪些方面。</span>
       </div>
-      <textarea class="ask-textarea" id="ans1" rows="3" placeholder="随便说说..."></textarea>
+      <textarea class="ask-textarea" id="ans1" rows="3" placeholder="关于你的、关于我的，都可以说..."></textarea>
     </div>
 
     <div class="ask-block" id="ask2">
@@ -718,8 +718,9 @@ body {
       <textarea class="ask-textarea" id="ans3" rows="3" placeholder="这里只有我们..."></textarea>
     </div>
 
-    <p class="save-note">✦ 你的回答会自动保存</p>
-    <button class="btn-send" onclick="saveAndEnd()">送 出 🌸</button>
+    <p class="save-note">✦ 提交后我就能看到你写的内容了</p>
+    <div data-fs-error style="font-size:12px;color:#f4a8a8;letter-spacing:2px;text-align:center;margin-bottom:10px;min-height:18px;"></div>
+    <button class="btn-send" id="submit-btn" data-fs-submit-btn onclick="saveAndEnd()">送 出 🌸</button>
   </div>
 </div>
 
@@ -860,29 +861,52 @@ function initAskAnims(){
   });
 }
 
-/* ── 保存 & 结语 ── */
-const STORAGE_KEY = 'june1_answers';
-
+/* ── 提交到 Formspree ── */
 async function saveAndEnd(){
-  const data = {
-    timestamp: new Date().toISOString(),
-    q1: document.getElementById('ans1').value,
-    q2: document.getElementById('ans2').value,
-    q3: document.getElementById('ans3').value,
+  const btn = document.getElementById('submit-btn');
+  const errEl = document.querySelector('[data-fs-error]');
+  const q1 = document.getElementById('ans1').value.trim();
+  const q2 = document.getElementById('ans2').value.trim();
+  const q3 = document.getElementById('ans3').value.trim();
+
+  if(!q1 && !q2 && !q3){
+    errEl.textContent = '✕ 写点什么再发吧～';
+    setTimeout(()=>{ errEl.textContent=''; }, 2500);
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '发送中...';
+  errEl.textContent = '';
+
+  const body = {
+    _subject: '六一 · 她的回答 🌸',
+    '有什么想让我了解关于你的／想了解我哪些方面': q1 || '（未填写）',
+    '如果今天可以做任何一件事，你想做什么': q2 || '（未填写）',
+    '有没有什么话一直想说但还没说的': q3 || '（未填写）',
+    _time: new Date().toLocaleString('zh-CN'),
   };
 
-  // 尝试用 window.storage（Artifact 持久存储）
   try {
-    if(window.storage && window.storage.set){
-      await window.storage.set(STORAGE_KEY, JSON.stringify(data));
+    const res = await fetch('https://formspree.io/f/meedwnaq', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if(res.ok){
+      goTo('page-end');
+      setTimeout(launchConfetti, 200);
+    } else {
+      const data = await res.json();
+      errEl.textContent = '✕ 发送失败，请稍后再试';
+      btn.disabled = false;
+      btn.textContent = '送 出 🌸';
     }
-  } catch(e){}
-
-  // 同时存 localStorage 作为备份
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e){}
-
-  goTo('page-end');
-  setTimeout(launchConfetti, 200);
+  } catch(e){
+    errEl.textContent = '✕ 网络好像出了点问题，再试试？';
+    btn.disabled = false;
+    btn.textContent = '送 出 🌸';
+  }
 }
 
 /* ── debug ── */
